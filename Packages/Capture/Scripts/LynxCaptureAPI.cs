@@ -24,6 +24,12 @@ namespace Lynx
             HANDTRACKING
         }
 
+        public enum ESensorEye : UInt32
+        {
+            LEFT = 0,
+            RIGHT
+        }
+
         // Current status of the capture
         public static Dictionary<ESensorType, bool> IsCaptureRunning { get; private set; } = new Dictionary<ESensorType, bool>()
         {
@@ -101,9 +107,9 @@ namespace Lynx
 
             IsCaptureRunning[sensorType] = true;
 
-            LynxCaptureLibraryInterface.IntrinsicData intrinsic;
-            LynxCaptureLibraryInterface.ExtrinsicData extrinsic;
-            if(!ReadCameraParameters(sensorType, out intrinsic, out extrinsic))
+            IntrinsicData intrinsic;
+            ExtrinsicData extrinsic;
+            if(!ReadCameraParameters(sensorType, ESensorEye.LEFT, out intrinsic, out extrinsic))
                 Debug.LogError("FAILED to read intrinsic data");
 
             LynxOpenCV.LynxCameraInitConfiguration(ref intrinsic);
@@ -126,11 +132,11 @@ namespace Lynx
         /// Read first camera parameters and return the matching structure.
         /// </summary>
         /// <returns>Intrinsic parameters or null if it failed.</returns>
-        public static bool ReadCameraParameters(ESensorType sensorType, out LynxCaptureLibraryInterface.IntrinsicData intrinsic, out LynxCaptureLibraryInterface.ExtrinsicData extrinsic)
+        public static bool ReadCameraParameters(ESensorType sensorType, ESensorEye sensorChirality, out LynxCaptureLibraryInterface.IntrinsicData intrinsic, out LynxCaptureLibraryInterface.ExtrinsicData extrinsic)
         {
-#if !UNITY_EDITOR
 
-            if (!LynxCaptureLibraryInterface.ReadCameraParameters((byte)sensorType, 0, out intrinsic, out extrinsic))
+#if !UNITY_EDITOR
+            if (!LynxCaptureLibraryInterface.ReadCameraParameters((byte)sensorType, (int)sensorChirality, out intrinsic, out extrinsic))
             {
                 Debug.LogError("Cannot read camera parameters (ensure camera is running).");
                 return false;
