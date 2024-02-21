@@ -68,12 +68,23 @@ namespace Lynx
             }
         }
 
+        public static void FinalizeQXR()
+        {
+            if (IsQXRInitialized)
+            {
+                LynxCaptureLibraryInterface.FinalizeQXR();
+                IsQXRInitialized = false;
+            }
+        }
+
+
         /// <summary>
         /// Initialize and start camera capture.
         /// </summary>
         /// <param name="maxFPS">Number of FPS to target.</param>
+        /// <param name="attachOnly">True if only attaching to a camera already streaming in system (OpenXR Runtime, 6dof tracking, hand-tracking)</param>
         /// <returns>False and an error log if it fails.</returns>
-        public static bool StartCapture(ESensorType sensorType, int maxFPS = 30)
+        public static bool StartCapture(ESensorType sensorType, int maxFPS = 30, bool attachOnly = true)
         {
             if (IsCaptureRunning[sensorType])
                 return false;
@@ -98,7 +109,7 @@ namespace Lynx
 
             
 
-            if(!LynxCaptureLibraryInterface.StartCamera((byte)sensorType))
+            if(!LynxCaptureLibraryInterface.StartCamera((byte)sensorType, attachOnly))
             {
                 Debug.LogError("Cannot start camera");
                 IsCaptureRunning[sensorType] = false;
@@ -115,6 +126,16 @@ namespace Lynx
             LynxOpenCV.LynxCameraInitConfiguration(ref intrinsic);
 
             return true;
+        }
+
+        /// <summary>
+        /// Initialize and start camera capture.
+        /// </summary>
+        /// <param name="pause">True to pose camera stream, False to restart camera stream</param>
+        /// <returns>False and an error log if it fails.</returns>
+        public static bool PauseCapture(ESensorType sensorType, bool pause)
+        {
+            return LynxCaptureLibraryInterface.PauseCamera((byte)sensorType, pause);
         }
 
         /// <summary>
@@ -189,9 +210,9 @@ namespace Lynx
 
         public static void StopAllCameras()
         {
-#if !UNITY_EDITOR && UNITY_ANDROID
-            LynxCaptureLibraryInterface.StopAllCameras();
-#endif
+            StopCapture(ESensorType.RGB);
+            StopCapture(ESensorType.TRACKING);
+            StopCapture(ESensorType.HANDTRACKING);
         }
 
         /// <summary>

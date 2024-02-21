@@ -26,6 +26,7 @@ namespace Lynx
         protected virtual void OnApplicationQuit()
         {
             LynxCaptureAPI.StopAllCameras();
+            LynxCaptureAPI.FinalizeQXR();
         }
 
         protected virtual void OnApplicationPause(bool pause)
