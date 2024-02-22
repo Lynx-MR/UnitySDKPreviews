@@ -20,11 +20,23 @@ namespace Lynx
             public double y;
             public double z;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Quaterniond
+        {
+            public double x;
+            public double y;
+            public double z;
+            public double w;
+        }
         #region LIBRARY ENTRY POINTS
         private const string LIB_NAME = "LynxOpenCV";
 
         [DllImport(LIB_NAME)]
         public static extern void LynxCameraInitConfiguration(ref LynxCaptureLibraryInterface.IntrinsicData intrinsic);
+
+        [DllImport(LIB_NAME)]
+        public static extern void LynxCameraSlowInitConfiguration(int[] size, double[] principalPoint, double[] focalLength, double skew, double[] radialDistortion, double[] tangentialDistortion);
 
         /// <summary>
         /// Convert default YUV NV12 buffer to RGB buffer.
@@ -225,6 +237,16 @@ namespace Lynx
 
         [DllImport(LIB_NAME)]
         public static extern void SetQRCodeSize(float size);
+        #endregion
+
+        #region Aruco
+
+        [DllImport(LIB_NAME)]
+        public static extern bool ProcessFrameAruco(IntPtr buffer, int width, int height, out LynxCaptureLibraryInterface.ObjectTransformation outTransformation);
+
+        [DllImport(LIB_NAME)]
+        public static extern void initArucoDetector(float markerLength);
+
         #endregion
 
         #endregion
