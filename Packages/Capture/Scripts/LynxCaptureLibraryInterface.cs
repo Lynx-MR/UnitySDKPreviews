@@ -21,7 +21,13 @@ namespace Lynx
         public static extern bool InitializeQXR();
 
         [DllImport(LIB_NAME)]
-        public static extern bool StartCamera(byte sensorType);
+        public static extern bool FinalizeQXR();
+
+        [DllImport(LIB_NAME)]
+        public static extern bool StartCamera(byte sensorType, bool attachOnly);
+
+        [DllImport(LIB_NAME)]
+        public static extern bool PauseCamera(byte sensorType, bool pause);
 
         [DllImport(LIB_NAME)]
         public static extern void StopCamera(byte sensorType);
