@@ -89,7 +89,6 @@ namespace Lynx
             public float[] translationVector;
         };
 
-
         [StructLayout(LayoutKind.Sequential)]
         public struct ExtrinsicData
         {
