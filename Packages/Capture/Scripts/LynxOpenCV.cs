@@ -20,7 +20,6 @@ namespace Lynx
             public double y;
             public double z;
         }
-
         #region LIBRARY ENTRY POINTS
         private const string LIB_NAME = "LynxOpenCV";
 
@@ -235,7 +234,6 @@ namespace Lynx
 
         [DllImport(LIB_NAME)]
         public static extern void initArucoDetector(float markerLength);
-
         #endregion
 
         #endregion
