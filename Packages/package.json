@@ -49,6 +49,11 @@
       "displayName": "VideoCapture",
       "description": "Different ways to capture buffers from the different cameras.",
       "path": "Samples~/VideoCapture"
+    },
+    {
+      "displayName": "Aruco Tracking",
+      "description": "Detect and track an Aruco marker (require Common Assets and VideoCapture samples).",
+      "path": "Samples~/ArucoMarker"
     }
   ]
 }
