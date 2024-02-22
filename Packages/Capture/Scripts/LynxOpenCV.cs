@@ -227,6 +227,15 @@ namespace Lynx
         public static extern void SetQRCodeSize(float size);
         #endregion
 
+        #region Aruco
+
+        [DllImport(LIB_NAME)]
+        public static extern bool ProcessFrameAruco(IntPtr buffer, int width, int height, out LynxCaptureLibraryInterface.ObjectTransformation outTransformation);
+
+        [DllImport(LIB_NAME)]
+        public static extern void initArucoDetector(float markerLength);
+        #endregion
+
         #endregion
 
     }

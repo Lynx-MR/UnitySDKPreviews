@@ -86,6 +86,14 @@ namespace Lynx
             public XrDistortionModelQTI distortionModel;
         };
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ObjectTransformation
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 9)]
+            public float[] rotationMatrix;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+            public float[] translationVector;
+        };
 
         [StructLayout(LayoutKind.Sequential)]
         public struct ExtrinsicData
