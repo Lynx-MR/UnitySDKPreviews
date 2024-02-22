@@ -9,17 +9,17 @@
         "com.unity.textmeshpro": "3.0.6",
         "com.unity.xr.interaction.toolkit": "2.5.2"
       },
-      "hash": "0f09ddde53b4f54ad80d20da252cb5a59904a2df"
+      "hash": "c0ebc7f6e539a188c822925ace7c823113712b88"
     },
     "com.lynx.modules": {
       "version": "https://github.com/Lynx-MR/UnitySDK.git?path=/Packages/Modules",
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.lynx.core": "1.1.3",
+        "com.lynx.core": "1.1.4",
         "com.unity.xr.hands": "1.3.0"
       },
-      "hash": "0f09ddde53b4f54ad80d20da252cb5a59904a2df"
+      "hash": "c0ebc7f6e539a188c822925ace7c823113712b88"
     },
     "com.lynx.previews": {
       "version": "file:../../Packages",
