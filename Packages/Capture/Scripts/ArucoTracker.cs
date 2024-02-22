@@ -74,10 +74,6 @@ namespace Lynx
 
                 if (LynxOpenCV.ProcessFrameAruco(frameInfo.leftEyeBuffer, (int)frameInfo.width, (int)frameInfo.height, out outTransformation)) // OpenCV process
                 {
-                    //UnityEngine.Debug.Log("Aruco translation in c# x, y, z " + outTransformation.translationVector[0] + ", " + outTransformation.translationVector[1] + ", " + outTransformation.translationVector[2]);
-                    //UnityEngine.Debug.Log("Aruco rotation in c# " + outTransformation.rotationMatrix[0] + ", " + outTransformation.rotationMatrix[1] + ", " + outTransformation.rotationMatrix[2]);
-                    //UnityEngine.Debug.Log("Aruco rotation in c# " + outTransformation.rotationMatrix[3] + ", " + outTransformation.rotationMatrix[4] + ", " + outTransformation.rotationMatrix[5]);
-                    //UnityEngine.Debug.Log("Aruco rotation in c# " + outTransformation.rotationMatrix[6] + ", " + outTransformation.rotationMatrix[7] + ", " + outTransformation.rotationMatrix[8]);
                     m_action = () =>
                     {
                         Matrix4x4 rotationMatrix = new Matrix4x4();
@@ -89,8 +85,6 @@ namespace Lynx
 
                         Quaternion rotationQuaternion = rotationMatrix.rotation;
 
-                        //UnityEngine.Debug.Log("Aruco rotation quaternion in c# x, y, z, w " + rotationQuaternion.x + ", " + rotationQuaternion.y + ", " + rotationQuaternion.z + ", " + rotationQuaternion.w);
-
                         // We need to inverse the y axis, we also need to remove 0.032 m or 32mm as we have a transformation relative to the left rgb camera and the main camera is between the two
                         // rgb cameras which are separated by 64mm
                         this.transform.position = Camera.main.transform.TransformPoint(new Vector3(outTransformation.translationVector[0]-(float)0.032, -outTransformation.translationVector[1], outTransformation.translationVector[2]));
@@ -98,7 +92,6 @@ namespace Lynx
                         // we add minus signs to x, y, and z. As we want the rotation of the marker in world space we need to rotate the marker relative to the camera and then the camera relative to the workd
                         this.transform.rotation = Camera.main.transform.rotation * new Quaternion(-(float)rotationQuaternion.x, (float)rotationQuaternion.y, -(float)rotationQuaternion.z, (float)rotationQuaternion.w);
 
-                       
                     };
                 }
 

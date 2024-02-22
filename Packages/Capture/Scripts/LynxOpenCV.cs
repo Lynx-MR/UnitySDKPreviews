@@ -21,22 +21,11 @@ namespace Lynx
             public double z;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct Quaterniond
-        {
-            public double x;
-            public double y;
-            public double z;
-            public double w;
-        }
         #region LIBRARY ENTRY POINTS
         private const string LIB_NAME = "LynxOpenCV";
 
         [DllImport(LIB_NAME)]
         public static extern void LynxCameraInitConfiguration(ref LynxCaptureLibraryInterface.IntrinsicData intrinsic);
-
-        [DllImport(LIB_NAME)]
-        public static extern void LynxCameraSlowInitConfiguration(int[] size, double[] principalPoint, double[] focalLength, double skew, double[] radialDistortion, double[] tangentialDistortion);
 
         /// <summary>
         /// Convert default YUV NV12 buffer to RGB buffer.
