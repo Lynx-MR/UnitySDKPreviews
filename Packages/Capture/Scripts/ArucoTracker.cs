@@ -25,6 +25,8 @@ namespace Lynx
         private static Vector3 IMUOffsetToCenterEye = new(0.001f, 0.010f, -0.011f);
         #endregion
 
+        private static float[] coeffs = new float[4] { 1.0f, 1.0f, -1.0f, -1.0f };
+
         #region UNITY
         public override void StartVideoCapture()
         {
@@ -43,6 +45,29 @@ namespace Lynx
 
         private void LateUpdate()
         {
+
+            if(Input.GetKeyUp(KeyCode.Alpha1))
+            {
+                coeffs[0] *= -1.0f;
+                Debug.Log($"{coeffs[0]}\t{coeffs[1]}\t{coeffs[2]}\t{coeffs[3]}");
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha2))
+            {
+                coeffs[1] *= -1.0f;
+                Debug.Log($"{coeffs[0]}\t{coeffs[1]}\t{coeffs[2]}\t{coeffs[3]}");
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha3))
+            {
+                coeffs[2] *= -1.0f;
+                Debug.Log($"{coeffs[0]}\t{coeffs[1]}\t{coeffs[2]}\t{coeffs[3]}");
+            }
+            if (Input.GetKeyUp(KeyCode.Alpha4))
+            {
+                coeffs[3] *= -1.0f;
+                Debug.Log($"{coeffs[0]}\t{coeffs[1]}\t{coeffs[2]}\t{coeffs[3]}");
+            }
+
+
             // Fire events in UI thread
             if (m_action != null)
             {
@@ -154,34 +179,21 @@ namespace Lynx
 
             Quaternion rotationQuaternion = rotationMatrix.rotation;
 
-            // We use the extrinsics of the left rgb camera to get the rotation and translation from the RGB to the main camera in the
-            // middle of the two RGB cameras This is under the hypothesis that translationBetweenRGBLeftAndMain is in opencv coordinate system 
-            Vector3 translationArucoAndMain = new Vector3(objTransformation.translationVector[0],
-                                                                                       objTransformation.translationVector[1],
-                                                                                       objTransformation.translationVector[2])
-                                                                            + translationBetweenCameraAndIMU
-                                                                            + IMUOffsetToCenterEye;
-
-            rotationQuaternion = rotationQuaternion * rotationBetweenCameraAndIMU;
-
-            // Case 1 the extrinsics represente the position of the main camera in the RGB coordinate system.
-            //rotationMatrix = rotationMatrix.t();
-            //cv::Mat translationMat = -rotationMatrix * cv::Mat(translationVec);
-            //translationVec = translationMat.reshape(3).at<cv::Vec3d>();
 
             // We need to inverse the y axis, we also need to remove 0.032 m or 32mm as we have a transformation relative 
             // to the left rgb camera and the main camera is between the two rgb cameras which are separated by 64mm
-            outPosition = Camera.main.transform.TransformPoint(new Vector3(translationArucoAndMain[0],
-                                                                                       -translationArucoAndMain[1],
-                                                                                       translationArucoAndMain[2]));
+            outPosition = Camera.main.transform.TransformPoint(new Vector3(objTransformation.translationVector[0] - 0.032f,
+                                        -objTransformation.translationVector[1],
+                                        objTransformation.translationVector[2]));
+
             // We want to transform the rotation from opencv to unity so we put a minus sign in front of the y value.
             // As this changes the right handedness of the coordinate system we add minus signs to x, y, and z.
             // As we want the rotation of the marker in world space we need to rotate the marker relative to the camera
             // and then the camera relative to the workd
-            outRotation = Camera.main.transform.rotation * new Quaternion(-(float)rotationQuaternion.x,
-                                                                                      (float)rotationQuaternion.y,
-                                                                                      -(float)rotationQuaternion.z,
-                                                                                      (float)rotationQuaternion.w);
+            outRotation = Camera.main.transform.rotation * new Quaternion((float)-rotationQuaternion.x,
+                                                                            (float)rotationQuaternion.y,
+                                                                            (float)-rotationQuaternion.z,
+                                                                            (float)rotationQuaternion.w);
         }
 
     }
