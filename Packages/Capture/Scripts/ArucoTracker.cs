@@ -6,8 +6,6 @@
  * @brief Simple script to track a Aruco code via Lynx Video Capture.
  */
 using System;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using UnityEngine;
 using static Lynx.LynxCaptureLibraryInterface;
 
@@ -22,10 +20,9 @@ namespace Lynx
 
         #region VARIABLES
         private static Action m_action = null; // Action for UI thread
-        private ExtrinsicData m_extrinsics_of_left_RGB;
-        private Quaternion rotationBetweenRGBLeftAndIMU;
-        private Vector3 translationBetweenRGBLeftAndIMU;
-        private Vector3 IMUOffsetToCenterEye = new(0.001f, 0.010f, -0.011f);
+        private Quaternion rotationBetweenRGBLeftAndIMU = Quaternion.identity;
+        private Vector3 translationBetweenRGBLeftAndIMU = Vector3.zero;
+        private static Vector3 IMUOffsetToCenterEye = new(0.001f, 0.010f, -0.011f);
         #endregion
 
         #region UNITY
@@ -41,35 +38,7 @@ namespace Lynx
 
             }
 
-
-            IntrinsicData i_tmp;
-
-            LynxCaptureLibraryInterface.ReadCameraParameters((int)LynxCaptureAPI.ESensorType.RGB, 0, out i_tmp, out m_extrinsics_of_left_RGB);
-
-
-            Quaternion rotationQuaternion = (new Quaternion((float)m_extrinsics_of_left_RGB.orientation[0],
-                                                           (float)m_extrinsics_of_left_RGB.orientation[1],
-                                                           (float)m_extrinsics_of_left_RGB.orientation[2],
-                                                           (float)m_extrinsics_of_left_RGB.orientation[3])).normalized;
-            Quaternion translation_as_quaternion = new Quaternion((float)m_extrinsics_of_left_RGB.position[0],
-                                                           (float)m_extrinsics_of_left_RGB.position[1],
-                                                           (float)m_extrinsics_of_left_RGB.position[2],
-                                                           0f);
-
-            Quaternion rotationQuaternion_conjugate = rotationQuaternion;
-            rotationQuaternion_conjugate.x = -rotationQuaternion_conjugate.x;
-            rotationQuaternion_conjugate.y = -rotationQuaternion_conjugate.y;
-            rotationQuaternion_conjugate.z = -rotationQuaternion_conjugate.z;
-            // conjugate is Real part - Imaginary part
-            rotationQuaternion_conjugate.w = rotationQuaternion_conjugate.w;
-
-            Quaternion inverseTranslation = rotationQuaternion * translation_as_quaternion * rotationQuaternion_conjugate;
-
-            translationBetweenRGBLeftAndIMU = new Vector3(-inverseTranslation.x, -inverseTranslation.y, -inverseTranslation.z);
-            rotationBetweenRGBLeftAndIMU = rotationQuaternion_conjugate;
-
-            LynxOpenCV.initArucoDetector(markerLength);
-
+            InitArucoTracking(markerLength, ref translationBetweenRGBLeftAndIMU, ref rotationBetweenRGBLeftAndIMU);
         }
 
         private void LateUpdate()
@@ -106,56 +75,114 @@ namespace Lynx
                 {
                     m_action = () =>
                     {
-                        Matrix4x4 rotationMatrix = new Matrix4x4();
+                        // Get Unity position and rotation based on Aruco tracking and extrinsics parameters
+                        Vector3 newTranslation;
+                        Quaternion newRotation;
+                        ConvertArucoPosition(outTransformation, rotationBetweenRGBLeftAndIMU, translationBetweenRGBLeftAndIMU, out newTranslation, out newRotation);
 
-                        rotationMatrix.SetRow(0, new Vector4(outTransformation.rotationMatrix[0],
-                                                             outTransformation.rotationMatrix[1],
-                                                             outTransformation.rotationMatrix[2],
-                                                             0));
-                        rotationMatrix.SetRow(1, new Vector4(outTransformation.rotationMatrix[3],
-                                                             outTransformation.rotationMatrix[4],
-                                                             outTransformation.rotationMatrix[5],
-                                                             0));
-                        rotationMatrix.SetRow(2, new Vector4(outTransformation.rotationMatrix[6],
-                                                             outTransformation.rotationMatrix[7],
-                                                             outTransformation.rotationMatrix[8],
-                                                             0));
-                        rotationMatrix.SetRow(3, new Vector4(0, 0, 0, 1));
-
-                        Quaternion rotationQuaternion = rotationMatrix.rotation;
-
-                        // We use the extrinsics of the left rgb camera to get the rotation and translation from the RGB to the main camera in the
-                        // middle of the two RGB cameras This is under the hypothesis that translationBetweenRGBLeftAndMain is in opencv coordinate system 
-                        Vector3 translationArucoAndMain = new Vector3(outTransformation.translationVector[0],
-                                                                                                   outTransformation.translationVector[1],
-                                                                                                   outTransformation.translationVector[2])
-                                                                                        + translationBetweenRGBLeftAndIMU
-                                                                                        + IMUOffsetToCenterEye;
-                        rotationQuaternion = rotationQuaternion * rotationBetweenRGBLeftAndIMU;
-
-                        // Case 1 the extrinsics represente the position of the main camera in the RGB coordinate system.
-                        //rotationMatrix = rotationMatrix.t();
-                        //cv::Mat translationMat = -rotationMatrix * cv::Mat(translationVec);
-                        //translationVec = translationMat.reshape(3).at<cv::Vec3d>();
-
-                        // We need to inverse the y axis, we also need to remove 0.032 m or 32mm as we have a transformation relative 
-                        // to the left rgb camera and the main camera is between the two rgb cameras which are separated by 64mm
-                        this.transform.position = Camera.main.transform.TransformPoint(new Vector3(translationArucoAndMain[0],
-                                                                                                   -translationArucoAndMain[1],
-                                                                                                   translationArucoAndMain[2]));
-                        // We want to transform the rotation from opencv to unity so we put a minus sign in front of the y value.
-                        // As this changes the right handedness of the coordinate system we add minus signs to x, y, and z.
-                        // As we want the rotation of the marker in world space we need to rotate the marker relative to the camera
-                        // and then the camera relative to the workd
-                        this.transform.rotation = Camera.main.transform.rotation * new Quaternion(-(float)rotationQuaternion.x,
-                                                                                                  (float)rotationQuaternion.y,
-                                                                                                  -(float)rotationQuaternion.z,
-                                                                                                  (float)rotationQuaternion.w);
-
+                        // Apply new pose
+                        this.transform.position = newTranslation;
+                        this.transform.rotation = newRotation;
                     };
                 }
 
             }
         }
+
+        /// <summary>
+        /// Initialialize Aruco tracking by retrieving translation and extrinsics data and using the given marker size.
+        /// Warning: require camera to be started
+        /// </summary>
+        /// <param name="markerLength"></param>
+        /// <param name="ouTranslationIntrinsics"></param>
+        /// <param name="outRotationIntrinsics"></param>
+        /// <param name="idCamera">Given camera ID (0: left, 1: right)</param>
+        public static void InitArucoTracking(float markerLength, ref Vector3 ouTranslationIntrinsics, ref Quaternion outRotationIntrinsics, int idCamera = 0)
+        {
+            ExtrinsicData e_tmp;
+
+            LynxCaptureLibraryInterface.ReadCameraParameters((int)LynxCaptureAPI.ESensorType.RGB, idCamera, out _, out e_tmp);
+
+
+            Quaternion rotationQuaternion = (new Quaternion((float)e_tmp.orientation[0],
+                                                           (float)e_tmp.orientation[1],
+                                                           (float)e_tmp.orientation[2],
+                                                           (float)e_tmp.orientation[3])).normalized;
+            Quaternion translation_as_quaternion = new Quaternion((float)e_tmp.position[0],
+                                                           (float)e_tmp.position[1],
+                                                           (float)e_tmp.position[2],
+                                                           0f); 
+
+            Quaternion rotationQuaternion_conjugate = rotationQuaternion;
+            rotationQuaternion_conjugate.x = -rotationQuaternion_conjugate.x;
+            rotationQuaternion_conjugate.y = -rotationQuaternion_conjugate.y;
+            rotationQuaternion_conjugate.z = -rotationQuaternion_conjugate.z;
+
+            Quaternion inverseTranslation = rotationQuaternion * translation_as_quaternion * rotationQuaternion_conjugate;
+
+            ouTranslationIntrinsics = new Vector3(-inverseTranslation.x, -inverseTranslation.y, -inverseTranslation.z);
+            outRotationIntrinsics = rotationQuaternion_conjugate;
+
+            LynxOpenCV.initArucoDetector(markerLength);
+        }
+
+        /// <summary>
+        /// Convert object transform from Aruco tracking to Unity coordinate space with given extrinsics parameters from IMU.
+        /// </summary>
+        /// <param name="objTransformation">Object transform from Aruco tracking</param>
+        /// <param name="rotationBetweenCameraAndIMU">Extrinsics parameters of the camera rotation.</param>
+        /// <param name="translationBetweenCameraAndIMU">Extrinsics parameters of the camera translation.</param>
+        /// <param name="outPosition">New computed position for Unity space</param>
+        /// <param name="outRotation">New computed rotation for Unity space</param>
+        public static void ConvertArucoPosition(ObjectTransformation objTransformation, Quaternion rotationBetweenCameraAndIMU, Vector3 translationBetweenCameraAndIMU, out Vector3 outPosition, out Quaternion outRotation)
+        {
+            Matrix4x4 rotationMatrix = new Matrix4x4();
+
+            rotationMatrix.SetRow(0, new Vector4(objTransformation.rotationMatrix[0],
+                                                 objTransformation.rotationMatrix[1],
+                                                 objTransformation.rotationMatrix[2],
+                                                 0));
+            rotationMatrix.SetRow(1, new Vector4(objTransformation.rotationMatrix[3],
+                                                 objTransformation.rotationMatrix[4],
+                                                 objTransformation.rotationMatrix[5],
+                                                 0));
+            rotationMatrix.SetRow(2, new Vector4(objTransformation.rotationMatrix[6],
+                                                 objTransformation.rotationMatrix[7],
+                                                 objTransformation.rotationMatrix[8],
+                                                 0));
+            rotationMatrix.SetRow(3, new Vector4(0, 0, 0, 1));
+
+            Quaternion rotationQuaternion = rotationMatrix.rotation;
+
+            // We use the extrinsics of the left rgb camera to get the rotation and translation from the RGB to the main camera in the
+            // middle of the two RGB cameras This is under the hypothesis that translationBetweenRGBLeftAndMain is in opencv coordinate system 
+            Vector3 translationArucoAndMain = new Vector3(objTransformation.translationVector[0],
+                                                                                       objTransformation.translationVector[1],
+                                                                                       objTransformation.translationVector[2])
+                                                                            + translationBetweenCameraAndIMU
+                                                                            + IMUOffsetToCenterEye;
+
+            rotationQuaternion = rotationQuaternion * rotationBetweenCameraAndIMU;
+
+            // Case 1 the extrinsics represente the position of the main camera in the RGB coordinate system.
+            //rotationMatrix = rotationMatrix.t();
+            //cv::Mat translationMat = -rotationMatrix * cv::Mat(translationVec);
+            //translationVec = translationMat.reshape(3).at<cv::Vec3d>();
+
+            // We need to inverse the y axis, we also need to remove 0.032 m or 32mm as we have a transformation relative 
+            // to the left rgb camera and the main camera is between the two rgb cameras which are separated by 64mm
+            outPosition = Camera.main.transform.TransformPoint(new Vector3(translationArucoAndMain[0],
+                                                                                       -translationArucoAndMain[1],
+                                                                                       translationArucoAndMain[2]));
+            // We want to transform the rotation from opencv to unity so we put a minus sign in front of the y value.
+            // As this changes the right handedness of the coordinate system we add minus signs to x, y, and z.
+            // As we want the rotation of the marker in world space we need to rotate the marker relative to the camera
+            // and then the camera relative to the workd
+            outRotation = Camera.main.transform.rotation * new Quaternion(-(float)rotationQuaternion.x,
+                                                                                      (float)rotationQuaternion.y,
+                                                                                      -(float)rotationQuaternion.z,
+                                                                                      (float)rotationQuaternion.w);
+        }
+
     }
 }

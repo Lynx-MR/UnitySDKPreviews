@@ -361,7 +361,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9380d1ea0ad99084f93b5eef08e8dffa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  markerLength: 0.052
+  markerLength: 0.061
 --- !u!4 &274035528
 Transform:
   m_ObjectHideFlags: 0
@@ -369,7 +369,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 274035526}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -377,7 +377,7 @@ Transform:
   - {fileID: 707792176}
   m_Father: {fileID: 0}
   m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!1001 &277019657
 PrefabInstance:
   m_ObjectHideFlags: 0
