@@ -195,9 +195,19 @@ namespace Lynx
         /// <param name="cameraIdx">Index where maps are stored (defined by InitUndistortRectifyMap)</param>
         /// <param name="width">Image width</param>
         /// <param name="height">Image height</param>
-        /// <param name="inOutRGBBuffer">Given RGB buffer to modify</param>
+        /// <param name="outRGBBuffer">Given RGB buffer to modify</param>
         [DllImport(LIB_NAME)]
         public static extern void UndistordRGB(byte idx, uint width, uint height, byte[] outRGBBuffer);
+
+        /// <summary>
+        /// Apply undistortion maps on given buffer.
+        /// </summary>
+        /// <param name="cameraIdx">Index where maps are stored (defined by InitUndistortRectifyMap)</param>
+        /// <param name="width">Image width</param>
+        /// <param name="height">Image height</param>
+        /// <param name="outRGBBuffer">Given RGB buffer to modify</param>
+        [DllImport(LIB_NAME)]
+        public static extern void UndistortGreyScale(byte idx, uint width, uint height, IntPtr outRGBBuffer);
 
         /// <summary>
         /// Set a C++ clock at current time.

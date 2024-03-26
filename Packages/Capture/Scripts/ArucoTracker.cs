@@ -91,9 +91,10 @@ namespace Lynx
                 // Buffer size (only Y data)
                 int size = (int)(frameInfo.width * frameInfo.height);
 
-
                 ObjectTransformation outTransformation;
 
+                // undistort image for aruco detection
+                LynxOpenCV.UndistortGreyScale(0, frameInfo.width, frameInfo.height, frameInfo.leftEyeBuffer);
 
                 // OpenCV process
                 if (LynxOpenCV.ProcessFrameAruco(frameInfo.leftEyeBuffer, (int)frameInfo.width, (int)frameInfo.height, out outTransformation))
@@ -124,9 +125,10 @@ namespace Lynx
         /// <param name="idCamera">Given camera ID (0: left, 1: right)</param>
         public static void InitArucoTracking(float markerLength, ref Vector3 ouTranslationIntrinsics, ref Quaternion outRotationIntrinsics, int idCamera = 0)
         {
+            IntrinsicData i_tmp;
             ExtrinsicData e_tmp;
 
-            LynxCaptureLibraryInterface.ReadCameraParameters((int)LynxCaptureAPI.ESensorType.RGB, idCamera, out _, out e_tmp);
+            LynxCaptureLibraryInterface.ReadCameraParameters((int)LynxCaptureAPI.ESensorType.RGB, idCamera, out i_tmp, out e_tmp);
 
 
             outRotationIntrinsics = (new Quaternion(-(float)e_tmp.orientation[0],
@@ -140,7 +142,7 @@ namespace Lynx
 
 
             // This call will init the map for x and y and populate newCamerMatrix corresponding to the new intrinsics of the undistorted image
-            LynxOpenCV.InitUndistortRectifyMap(0, ref e_tmp, ref e_tmp);
+            LynxOpenCV.InitUndistortRectifyMap(0, ref i_tmp, ref e_tmp);
 
             LynxOpenCV.initArucoDetector(markerLength);
         }
@@ -177,9 +179,9 @@ namespace Lynx
             rotationQuaternion = rotationBetweenCameraAndIMU * rotationQuaternion;
 
             // Convert the translation in the RGB left coordinate into the IMU coordinate system
-            Vector3 translationArucoinRGB = new Vector3((float)outTransformation.translationVector[0],
-                                                        (float)outTransformation.translationVector[1],
-                                                        (float)outTransformation.translationVector[2]);
+            Vector3 translationArucoinRGB = new Vector3((float)objTransformation.translationVector[0],
+                                                        (float)objTransformation.translationVector[1],
+                                                        (float)objTransformation.translationVector[2]);
             UnityEngine.Debug.Log("Aruco debug before translationArucoinRGB : " + translationArucoinRGB);
 
             Vector3 translastionOfArucoinIMU = rotationBetweenCameraAndIMU * translationArucoinRGB + translationBetweenCameraAndIMU;
