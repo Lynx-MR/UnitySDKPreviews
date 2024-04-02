@@ -182,7 +182,6 @@ namespace Lynx
             Vector3 translationArucoinRGB = new Vector3((float)objTransformation.translationVector[0],
                                                         (float)objTransformation.translationVector[1],
                                                         (float)objTransformation.translationVector[2]);
-            UnityEngine.Debug.Log("Aruco debug before translationArucoinRGB : " + translationArucoinRGB);
 
             Vector3 translastionOfArucoinIMU = rotationBetweenCameraAndIMU * translationArucoinRGB + translationBetweenCameraAndIMU;
             // Translate the coordinate space from the IMU to the center eye
